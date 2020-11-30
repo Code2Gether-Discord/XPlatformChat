@@ -36,7 +36,7 @@ namespace XPlatformChat.WebApi
                 .AddDefaultTokenProviders();
 
             services.AddAuthentication(ConfigureAuthentication).AddJwtBearer(ConfigureJwtBearer);
-
+            services.AddSwaggerGen();
             services.AddSignalR();
         }
 
@@ -65,6 +65,15 @@ namespace XPlatformChat.WebApi
         {
             if (env.IsDevelopment())
                 app.UseDeveloperExceptionPage();
+
+
+            app.UseSwagger();
+
+            app.UseSwaggerUI(c =>
+            {
+                c.SwaggerEndpoint("/swagger/v1/swagger.json", "XPlatformChat");
+                c.RoutePrefix = string.Empty;
+            });
 
             app.UseHttpsRedirection();
 
