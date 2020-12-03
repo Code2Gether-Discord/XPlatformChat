@@ -22,6 +22,7 @@ namespace XPlatformChat.WebApi.Controllers
             _context = context;
         }
 
+        [HttpGet]
         public async Task<IEnumerable<Message>> GetMessages()
         {
             return await _context.Messages.ToListAsync();
