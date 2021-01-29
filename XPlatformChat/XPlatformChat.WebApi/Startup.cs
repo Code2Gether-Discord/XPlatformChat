@@ -8,6 +8,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.IdentityModel.Tokens;
+using Npgsql;
 using System.Text;
 using XPlatformChat.Lib.Models;
 using XPlatformChat.WebApi.Data;
@@ -27,10 +28,8 @@ namespace XPlatformChat.WebApi
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddControllers();
+            SetEFDataProvider(services);
 
-            string connStr = Configuration.GetConnectionString("IdentityStores");
-            services.AddDbContext<ChatDbContext>(options => options.UseSqlServer(connStr));
-            
             services.AddIdentity<ChatUser, IdentityRole>()
                 .AddEntityFrameworkStores<ChatDbContext>()
                 .AddDefaultTokenProviders();
@@ -59,6 +58,25 @@ namespace XPlatformChat.WebApi
                 ValidIssuer = Configuration["JWT:ValidIssuer"],
                 IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Configuration["JWT:Secret"]))
             };
+        }
+
+        private void SetEFDataProvider(IServiceCollection services)
+        {
+            string environment = Configuration.GetValue<string>("Environment");
+
+            if (environment == "Production")
+            {
+                NpgsqlConnectionStringBuilder builder = new(Configuration.GetConnectionString("PostgresIdentityStores"));
+                builder.Password = Configuration["Password"];
+                string connStr = builder.ConnectionString;
+
+                services.AddDbContext<ChatDbContext>(options => options.UseNpgsql(connStr));
+            }
+            else
+            {
+                string connStr = Configuration.GetConnectionString("IdentityStores");
+                services.AddDbContext<ChatDbContext>(options => options.UseSqlServer(connStr));
+            }
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
